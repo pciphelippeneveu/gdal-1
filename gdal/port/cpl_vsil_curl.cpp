@@ -1760,6 +1760,8 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
     {
         // Don't try to read after end of file.
         poFS->GetCachedFileProp(m_pszURL, oFileProp);
+        printf("FileSize: %d\n",
+               (int) oFileProp.fileSize);
         if( oFileProp.bHasComputedFileSize &&
             iterOffset >= oFileProp.fileSize )
         {
@@ -1841,12 +1843,17 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
                (int) iterOffset,
                (int) nBufferRequestSize,
                (int) nOffsetToDownload);
+        const vsi_l_offset nRegionOffset = iterOffset - nOffsetToDownload;
+        if (osRegion.size() < nRegionOffset)
+        {
+            bEOF = true;
+            return 0;
+        }
         const int nToCopy = static_cast<int>(
             std::min(static_cast<vsi_l_offset>(nBufferRequestSize),
-                     osRegion.size() -
-                     (iterOffset - nOffsetToDownload)));
+                     osRegion.size() - nRegionOffset));
         memcpy(pBuffer,
-               osRegion.data() + iterOffset - nOffsetToDownload,
+               osRegion.data() + nRegionOffset,
                nToCopy);
         pBuffer = static_cast<char *>(pBuffer) + nToCopy;
         iterOffset += nToCopy;
