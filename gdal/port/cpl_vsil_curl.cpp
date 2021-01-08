@@ -1843,12 +1843,11 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
                (int) iterOffset,
                (int) nBufferRequestSize,
                (int) nOffsetToDownload);
+
         const vsi_l_offset nRegionOffset = iterOffset - nOffsetToDownload;
         if (osRegion.size() < nRegionOffset)
-        {
-            bEOF = true;
-            return 0;
-        }
+            break;
+
         const int nToCopy = static_cast<int>(
             std::min(static_cast<vsi_l_offset>(nBufferRequestSize),
                      osRegion.size() - nRegionOffset));
