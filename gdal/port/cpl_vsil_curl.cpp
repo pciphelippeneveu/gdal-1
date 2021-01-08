@@ -1737,6 +1737,7 @@ void VSICurlHandle::DownloadRegionPostProcess( const vsi_l_offset startOffset,
 size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
                             size_t const  nMemb )
 {
+    printf("VSICurlHandle::Read(%d, %d)\n", (int) nSize, (int) nMemb);
     NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
     NetworkStatisticsFile oContextFile(m_osFilename);
     NetworkStatisticsAction oContextAction("Read");
@@ -1832,6 +1833,14 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
                 return 0;
             }
         }
+        printf("Region: %d\n"
+               "BufOff: %d\n"
+               "BufSize: %d\n"
+               "Download: %d\n",
+               (int) osRegion.size(),
+               (int) iterOffset,
+               (int) nBufferRequestSize,
+               (int) nOffsetToDownload);
         const int nToCopy = static_cast<int>(
             std::min(static_cast<vsi_l_offset>(nBufferRequestSize),
                      osRegion.size() -
