@@ -91,6 +91,12 @@ cd $(dirname $0)/../../autotest/gdrivers/data/hfa
 zip -r $OUT/hfa_fuzzer_seed_corpus.zip ./*.img >/dev/null
 cd $OLDPWD
 
+echo "Building pcidsk_fuzzer_seed_corpus.zip"
+rm -f $OUT/pcidsk_fuzzer_seed_corpus.zip
+cd $(dirname $0)/../../autotest/gdrivers/data/pcidsk
+zip -r $OUT/pcidsk_fuzzer_seed_corpus.zip ./*.pix >/dev/null
+cd $OLDPWD
+
 echo "Building adrg_fuzzer_seed_corpus.zip"
 {
     printf "FUZZER_FRIENDLY_ARCHIVE\\n"

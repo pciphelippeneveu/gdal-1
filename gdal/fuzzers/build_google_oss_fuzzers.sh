@@ -92,7 +92,7 @@ build_ogr_specialized_fuzzer fgb RegisterOGRFlatGeobuf "/vsimem/test.fgb" "/vsim
 build_fuzzer cad_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRCAD
 build_fuzzer rec_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRREC -DUSE_FILESYSTEM -DEXTENSION="\"rec\""
 
-formats="GTiff HFA"
+formats="GTiff HFA PCIDSK"
 for format in $formats; do
     fuzzerName=$(echo $format | tr '[:upper:]' '[:lower:]')
     build_gdal_specialized_fuzzer $fuzzerName "GDALRegister_$format" "/vsimem/test" "/vsimem/test"
