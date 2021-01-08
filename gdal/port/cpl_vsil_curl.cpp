@@ -1737,7 +1737,6 @@ void VSICurlHandle::DownloadRegionPostProcess( const vsi_l_offset startOffset,
 size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
                             size_t const  nMemb )
 {
-    printf("VSICurlHandle::Read(%d, %d)\n", (int) nSize, (int) nMemb);
     NetworkStatisticsFileSystem oContextFS(poFS->GetFSPrefix());
     NetworkStatisticsFile oContextFile(m_osFilename);
     NetworkStatisticsAction oContextAction("Read");
