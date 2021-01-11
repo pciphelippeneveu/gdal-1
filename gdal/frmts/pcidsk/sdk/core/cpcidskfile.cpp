@@ -792,28 +792,23 @@ void CPCIDSKFile::InitializeFromHeader()
             // adjust it relative to the path of the pcidsk file.
             filename = interfaces.MergeRelativePath(interfaces.io,base_filename,filename);
         }
-        // work out channel type from header
-        eChanType pixel_type;
+
+/* -------------------------------------------------------------------- */
+/*      Get the channel type from the image header its validity.        */
+/*                                                                      */
+/*      We used to set the channel type by index. But this was          */
+/*      causing pcisdk_fuzzer slow-unit failures. So it was removed     */
+/*      to match PCI's internal implementation which errors in this     */
+/*      specific case.                                                  */
+/* -------------------------------------------------------------------- */
         const char *pixel_type_string = ih.Get( 160, 8 );
 
-        pixel_type = GetDataTypeFromName(pixel_type_string);
+        eChanType pixel_type = GetDataTypeFromName(pixel_type_string);
 
-        // if we didn't get channel type in header, work out from counts (old).
-        // Check this only if we don't have complex channels:
-
-        if (STARTS_WITH(pixel_type_string,"        "))
+        if (pixel_type == CHN_UNKNOWN)
         {
-            if( !( count_c32r == 0 && count_c16u == 0 && count_c16s == 0 ) )
-                return ThrowPCIDSKException("Assertion 'count_c32r == 0 && count_c16u == 0 && count_c16s == 0' failed");
-
-            if( channelnum <= count_8u )
-                pixel_type = CHN_8U;
-            else if( channelnum <= count_8u + count_16s )
-                pixel_type = CHN_16S;
-            else if( channelnum <= count_8u + count_16s + count_16u )
-                pixel_type = CHN_16U;
-            else
-                pixel_type = CHN_32R;
+            return ThrowPCIDSKException("Invalid or unsupported channel type: %s",
+                                        pixel_type_string);
         }
 
         if( interleaving == "BAND"  )
