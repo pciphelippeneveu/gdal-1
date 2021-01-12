@@ -180,18 +180,35 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
                             file->GetUpdatable() );
 
 /* -------------------------------------------------------------------- */
+/*      Get this file handle to know if it is an internal channel.      */
+/* -------------------------------------------------------------------- */
+    void ** phFileIO;
+    Mutex ** phFileMutex;
+    file->GetIODetails(&phFileIO, &phFileMutex, "", file->GetUpdatable());
+
+/* -------------------------------------------------------------------- */
 /*      If the imagery is packed, we can read directly into the         */
 /*      target buffer.                                                  */
 /* -------------------------------------------------------------------- */
     uint64 offset = start_byte + line_offset * block_index
         + pixel_offset * xoff;
 
+    uint64 nReadSize = 0;
+
     if( pixel_size == (int) pixel_offset )
     {
-        MutexHolder holder( *io_mutex_p );
+        if (*io_handle_p == *phFileIO)
+        {
+            file->ReadFromFile(buffer, offset, window_size);
+        }
+        else
+        {
+            MutexHolder holder( *io_mutex_p );
 
-        interfaces->io->Seek( *io_handle_p, offset, SEEK_SET );
-        interfaces->io->Read( buffer, 1, window_size, *io_handle_p );
+            interfaces->io->Seek( *io_handle_p, offset, SEEK_SET );
+
+            nReadSize = interfaces->io->Read( buffer, 1, window_size, *io_handle_p );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -204,12 +221,20 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
         PCIDSKBuffer line_from_disk( window_size );
         char *this_pixel;
 
-        MutexHolder holder( *io_mutex_p );
+        if (*io_handle_p == *phFileIO)
+        {
+            file->ReadFromFile(line_from_disk.buffer, offset, window_size);
+        }
+        else
+        {
+            MutexHolder holder( *io_mutex_p );
 
-        interfaces->io->Seek( *io_handle_p, offset, SEEK_SET );
-        interfaces->io->Read( line_from_disk.buffer,
-                              1, line_from_disk.buffer_size,
-                              *io_handle_p );
+            interfaces->io->Seek( *io_handle_p, offset, SEEK_SET );
+
+            nReadSize = interfaces->io->Read( line_from_disk.buffer,
+                                              1, line_from_disk.buffer_size,
+                                              *io_handle_p );
+        }
 
         for( i = 0, this_pixel = line_from_disk.buffer; i < xsize; i++ )
         {
@@ -217,6 +242,13 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
                     this_pixel, pixel_size );
             this_pixel += pixel_offset;
         }
+    }
+
+    if (*io_handle_p != *phFileIO &&
+        nReadSize != static_cast<unsigned>(window_size))
+    {
+        return ThrowPCIDSKException(0, "Failed to read %d bytes at offset " PCIDSK_FRMT_UINT64 " in file: %s",
+                                    window_size, offset, filename.c_str());
     }
 
 /* -------------------------------------------------------------------- */
